@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.model.Announcement;
 import org.example.model.User;
 import org.example.repository.AnRepo;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,10 +36,12 @@ public class Controller {
 
     private JdbcTemplate tmpl;
 
-    @PostMapping("/users")
-    public void create(@RequestBody @Valid User user) {
-        tmpl.update("INSERT INTO users(user_name, user_phone) VALUES (?, ?)", user.getName(), user.getPhoneNumber());
-        log.info("Пользователь создан");
+    private int maxCountOfUserAnnouncements;
+
+    public Controller(@Value("${max.count.of.user.announcements}") int maxCountOfUserAnnouncements, AnRepo anRepo, JdbcTemplate tmpl) {
+        this.maxCountOfUserAnnouncements = maxCountOfUserAnnouncements;
+        this.anRepo = anRepo;
+        this.tmpl = tmpl;
     }
 
     @GetMapping("/users/{id}")
@@ -73,7 +76,7 @@ public class Controller {
             return null;
         }
 
-        if (anRepo.findAllByAuthorId(announcement.getAuthorId()).size() >= 5) {
+        if (anRepo.findAllByAuthorId(announcement.getAuthorId()).size() >= maxCountOfUserAnnouncements) {
             log.info("Не могу создать объявление, превышено количество");
             return null;
         }
